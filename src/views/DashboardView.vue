@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted,computed  } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { useAuthStore } from '@/stores/auth'
 import ProjectCard from '@/components/ProjectCard.vue'
@@ -44,6 +44,8 @@ async function saveProject() {
   }
   showForm.value = false
 }
+
+const hasProjects = computed(() => (projectStore.projects?.length ?? 0) > 0)
 </script>
 
 <template>
@@ -68,17 +70,58 @@ async function saveProject() {
     </div>
 
     <!-- Liste projets -->
-    <p v-if="projectStore.loading">Chargement...</p>
-    <p v-else-if="projectStore.error" class="text-red-600">{{ projectStore.error }}</p>
+    <!-- Liste projets -->
+<p v-if="projectStore.loading">Chargement...</p>
+<p v-else-if="projectStore.error" class="text-red-600">{{ projectStore.error }}</p>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <ProjectCard
-        v-for="project in projectStore.projects"
-        :key="project.id"
-        :project="project"
-        @edit="openEditForm(project)"
-      />
-    </div>
+<!-- Etat vide -->
+<div v-else-if="!hasProjects" class="text-center py-16 border rounded-2xl bg-gray-50">
+  <p class="text-lg text-gray-600 mb-4">Aucun projet pour le moment.</p>
+  <button
+    @click="openCreateForm"
+    class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-white font-medium shadow hover:bg-emerald-700"
+  >
+    + Créer mon premier projet
+  </button>
+</div>
+
+<!-- Grille des projets -->
+<div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+  <ProjectCard
+    v-for="project in projectStore.projects"
+    :key="project.id"
+    :project="project"
+    @edit="openEditForm(project)"
+    @delete="projectStore.deleteProject(project.id)"
+  />
+</div>
+
+<!-- Pagination : seulement si projets ET > 1 page -->
+<div
+  v-if="hasProjects && projectStore.meta && projectStore.meta.last_page > 1"
+  class="flex justify-center items-center gap-2 mt-6"
+>
+  <button
+    :disabled="!projectStore.links?.prev"
+    @click="projectStore.fetchProjects(projectStore.meta.current_page - 1)"
+    class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+  >
+    Précédent
+  </button>
+
+  <span class="px-3 py-1">
+    Page {{ projectStore.meta.current_page }} / {{ projectStore.meta.last_page }}
+  </span>
+
+  <button
+    :disabled="!projectStore.links?.next"
+    @click="projectStore.fetchProjects(projectStore.meta.current_page + 1)"
+    class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+  >
+    Suivant
+  </button>
+</div>
+
 
     <!-- Formulaire -->
     <div v-if="showForm" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

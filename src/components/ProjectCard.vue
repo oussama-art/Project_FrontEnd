@@ -56,6 +56,13 @@ const status = computed(() =>
       >
         Modifier
       </button>
+
+      <button
+        @click="$emit('delete')"
+        class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+      >
+        Supprimer
+      </button>
     </div>
   </div>
 </template>
